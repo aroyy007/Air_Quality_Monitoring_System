@@ -1,0 +1,135 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Share+Tech+Mono&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    background: radial-gradient(circle at 50% -20%, #1a1a1a, #121212);
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    @apply bg-black/20 backdrop-blur-xl border border-white/10 rounded-xl;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
+  }
+  
+  .glow {
+    @apply relative;
+  }
+  
+  .glow::before {
+    @apply content-[''] absolute inset-0 -z-10 blur-2xl opacity-60 transition-opacity duration-500;
+    animation: pulse 4s ease-in-out infinite;
+  }
+  
+  .glow-green::before {
+    @apply bg-aqi-good;
+    box-shadow: 0 0 30px #4caf50;
+  }
+  
+  .glow-yellow::before {
+    @apply bg-aqi-moderate;
+    box-shadow: 0 0 30px #ffeb3b;
+  }
+  
+  .glow-red::before {
+    @apply bg-aqi-unhealthy;
+    box-shadow: 0 0 30px #f44336;
+  }
+  
+  .glow-purple::before {
+    @apply bg-aqi-hazardous;
+    box-shadow: 0 0 30px #9c27b0;
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 0.6;
+    }
+    50% {
+      opacity: 0.8;
+    }
+  }
+
+  .colorful-border {
+    @apply relative font-['Share_Tech_Mono'];
+    background: linear-gradient(90deg, #9b87f5, #D946EF, #F97316, #0EA5E9);
+    background-size: 300% 100%;
+    animation: gradient-shift 8s ease infinite;
+    -webkit-background-clip: text;
+    color: transparent;
+  }
+
+  @keyframes gradient-shift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  @keyframes typewriter {
+    from { width: 0; }
+    to { width: 100%; }
+  }
+
+  .typewriter {
+    overflow: hidden;
+    white-space: nowrap;
+    border-right: 2px solid transparent;
+    animation: 
+      typewriter 2s steps(20, end) forwards,
+      blink-caret 0.75s step-end infinite;
+  }
+
+  @keyframes blink-caret {
+    from, to { border-color: transparent }
+    50% { border-color: #fff; }
+  }
+
+  @keyframes meteor {
+    0% {
+      transform: rotate(215deg) translateX(0);
+      opacity: 1;
+    }
+    70% {
+      opacity: 1;
+    }
+    100% {
+      transform: rotate(215deg) translateX(-500px);
+      opacity: 0;
+    }
+  }
+
+  .animate-meteor {
+    animation: meteor linear infinite;
+  }
+}

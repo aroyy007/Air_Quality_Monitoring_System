@@ -59,7 +59,6 @@ const Index = () => {
         setStatusDescription(description);
     };
 
-    // Adjusted thresholds based on Arduino PPM ranges
     // Adjusted thresholds based on EPA standards
     const thresholds = {
         temperature: {

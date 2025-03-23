@@ -5,6 +5,7 @@ import connectDB from "./config/db.js";
 import sensorRoutes from "./routes/sensorRoutes.js";
 import weatherRoutes from "./routes/weatherRoutes.js";
 import emailRoutes from "./routes/emailRoutes.js";
+import predictionRoutes from "./routes/predictionRoutes.js"; // Add this
 import mongoose from "mongoose";
 import { SerialPort } from "serialport";
 import { ReadlineParser } from "@serialport/parser-readline";
@@ -22,6 +23,7 @@ connectDB();
 app.use("/api/sensors", sensorRoutes);
 app.use("/api/weather", weatherRoutes);
 app.use("/api/alerts", emailRoutes);
+app.use("/api/predictions", predictionRoutes); // Add this route
 
 app.get("/", (req, res) => res.send("API is running..."));
 
@@ -81,20 +83,19 @@ let arduinoPortInstance = null;
                     }
 
                     // Create new sensor data entry with proper type conversion
+                    // Create new sensor data entry with proper type conversion
                     const newEntry = new SensorData({
                         // Arduino sensor values
                         co: parseFloat(sensorData.co) || 0,
-                        methane: parseFloat(sensorData.ch4) || 0,
-                        airQuality: parseFloat(sensorData.air_quality) || 0,
+                        methane: parseFloat(sensorData.methane) || 0,      // Change from sensorData.ch4
+                        airQuality: parseFloat(sensorData.airQuality) || 0, // Change from sensorData.air_quality
 
                         // If Arduino calculates AQI, use it; otherwise it will be calculated
                         aqi: parseFloat(sensorData.aqi) || 0,
 
-                        // Arduino might provide these; if not, they'll be filled by API later
+                        // Other fields remain the same
                         temperature: parseFloat(sensorData.temperature) || 0,
                         humidity: parseFloat(sensorData.humidity) || 0,
-
-                        // These are typically from API but Arduino might have them
                         pm25: parseFloat(sensorData.pm25) || 0,
                         pm10: parseFloat(sensorData.pm10) || 0,
                         o3: parseFloat(sensorData.o3) || 0,

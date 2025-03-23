@@ -4,6 +4,7 @@ import AQIDisplay from "@/components/AQIDisplay";
 import SensorCard from "@/components/SensorCard";
 import { Meteors } from "@/components/Meteors";
 import AQIChart from "@/components/AQIChart";
+import AQIPredictionChart from "@/components/AQIPredictionChart"; 
 import AlertSubscription from "@/components/AlertSubscription";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
@@ -232,6 +233,7 @@ const Index = () => {
                             <AlertTitle className="text-lg font-bold">Environmental Status</AlertTitle>
                             <AlertDescription className="text-white/90">{statusDescription}</AlertDescription>
                         </Alert>
+                        
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             <SensorCard title="Temperature" value={data.temperature} unit="°C" icon={Thermometer} glowColor={sensorStatuses.temperature?.color || "green"} description={sensorStatuses.temperature?.message} />
                             <SensorCard title="Humidity" value={data.humidity} unit="%" icon={Droplets} glowColor={sensorStatuses.humidity?.color || "green"} description={sensorStatuses.humidity?.message} />
@@ -245,7 +247,7 @@ const Index = () => {
                             {/* <SensorCard title="NO₂" value={data.no2} unit="µg/m³" icon={Biohazard} glowColor={sensorStatuses.no2?.color || "green"} description={sensorStatuses.no2?.message} />
                             <SensorCard title="NH₃" value={data.nh3} unit="µg/m³" icon={Atom} glowColor={sensorStatuses.nh3?.color || "green"} description={sensorStatuses.nh3?.message} /> */}
                         </div>
-
+                        <AQIPredictionChart />
                         <AlertSubscription />
                         <AQIChart />
                     </>

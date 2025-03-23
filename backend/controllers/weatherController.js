@@ -133,39 +133,41 @@ export const getWeatherData = async (req, res) => {
 
         // Merge sensor data with API data, prioritizing sensor data when available
         const mergedPollutants = {
-            pm25: sensorData.pm25 || apiPollutants.pm25,
-            pm10: sensorData.pm10 || apiPollutants.pm10,
-            o3: sensorData.o3 || apiPollutants.o3,
-            co: sensorData.co || apiPollutants.co,
-            so2: sensorData.so2 || apiPollutants.so2,
-            no2: sensorData.no2 || apiPollutants.no2,
-            nh3: sensorData.nh3 || apiPollutants.nh3
-        };
+          pm25: sensorData.pm25 || apiPollutants.pm25,
+          pm10: sensorData.pm10 || apiPollutants.pm10,
+          o3: sensorData.o3 || apiPollutants.o3,
+          co: sensorData.co || apiPollutants.co,
+          so2: sensorData.so2 || apiPollutants.so2,
+          no2: sensorData.no2 || apiPollutants.no2,
+          nh3: sensorData.nh3 || apiPollutants.nh3,
+          methane: sensorData.methane || 0,
+          airQuality: sensorData.airQuality || 0
+      };
 
         // Calculate AQI if not provided by sensor
         const calculatedAQI = calculateAQI(mergedPollutants);
 
         const responseData = {
-            // Prioritize sensor data for these values
-            co: sensorData.co || apiPollutants.co,
-            methane: sensorData.methane || 0,
-            airQuality: sensorData.airQuality || 0,
-            
-            // Use calculated AQI or fallback to sensor/API AQI
-            aqi: sensorData.aqi || calculatedAQI || airPollution.data.list[0].main.aqi || 0,
-            
-            // Temperature and humidity from weather API
-            temperature: sensorData.temperature || weather.data.main.temp || 0,
-            humidity: sensorData.humidity || weather.data.main.humidity || 0,
-            
-            // Air pollution components
-            pm25: mergedPollutants.pm25,
-            pm10: mergedPollutants.pm10,
-            o3: mergedPollutants.o3,
-            so2: mergedPollutants.so2,
-            no2: mergedPollutants.no2,
-            nh3: mergedPollutants.nh3,
-        };
+          // Prioritize sensor data for these values
+          co: sensorData.co || apiPollutants.co,
+          methane: sensorData.methane || 0,
+          airQuality: sensorData.airQuality || 0,
+          
+          // Use calculated AQI or fallback to sensor/API AQI
+          aqi: sensorData.aqi || calculatedAQI || airPollution.data.list[0].main.aqi || 0,
+          
+          // Temperature and humidity from weather API
+          temperature: sensorData.temperature || weather.data.main.temp || 0,
+          humidity: sensorData.humidity || weather.data.main.humidity || 0,
+          
+          // Air pollution components
+          pm25: mergedPollutants.pm25,
+          pm10: mergedPollutants.pm10,
+          o3: mergedPollutants.o3,
+          so2: mergedPollutants.so2,
+          no2: mergedPollutants.no2,
+          nh3: mergedPollutants.nh3,
+      };
 
         console.log("Sending weather data:", responseData);
         res.json(responseData);

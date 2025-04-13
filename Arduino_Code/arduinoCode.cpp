@@ -85,6 +85,43 @@ void loop() {
   receiveFromServer();
 }
 
+// Function to calculate CO (MQ7)
+float calculateCOppm(int sensorValue) {
+  float voltage = sensorValue * (5.0 / 1023.0);
+  float rs = ((5.0 * 10.0) / voltage) - 10.0;  // 10K load resistor
+  
+  // MQ7 has a different curve than other sensors
+  // Rs/R0 = 1 at 100ppm CO in clean air
+  // Typical curve equation: ppm = a * (Rs/R0)^b
+  // For MQ7, a≈100, b≈-1.5
+  float r0 = 10.0 * MQ7_RATIO_CLEAN_AIR;  // Calculate R0 from ratio in clean air
+  return 100.0 * pow(rs / r0, -1.5);
+}
+
+// Function to calculate Methane/CH4 (MQ4)
+float calculateCH4ppm(int sensorValue) {
+  float voltage = sensorValue * (5.0 / 1023.0);
+  float rs = ((5.0 * 10.0) / voltage) - 10.0;  // 10K load resistor
+  
+  // MQ4 is calibrated for methane
+  // Rs/R0 = 1 at around 1000ppm CH4 in clean air
+  // For MQ4, a≈1000, b≈-2.95 (steeper curve)
+  float r0 = 10.0 * MQ4_RATIO_CLEAN_AIR;
+  return 1000.0 * pow(rs / r0, -2.95);
+}
+
+// Function to calculate air quality (MQ135)
+float calculateAirQualityppm(int sensorValue) {
+  float voltage = sensorValue * (5.0 / 1023.0);
+  float rs = ((5.0 * 10.0) / voltage) - 10.0;  // 10K load resistor
+  
+  // MQ135 is primarily for CO2 and other gases
+  // Rs/R0 = 1 at 400ppm CO2 in clean air
+  // For MQ135, a≈400, b≈-2.2
+  float r0 = 10.0 * MQ135_RATIO_CLEAN_AIR;
+  return 400.0 * pow(rs / r0, -2.2);
+}
+
 // Function to read sensors
 void readSensors() {
   // Read raw analog values
@@ -92,17 +129,15 @@ void readSensors() {
   mq135Value = analogRead(MQ135_PIN);
   mq4Value = analogRead(MQ4_PIN);
   
-  // Convert to PPM using calibration curves
-  co_ppm = calculatePPM(mq7Value, MQ7_RATIO_CLEAN_AIR, 100.0);
-  air_quality_ppm = calculatePPM(mq135Value, MQ135_RATIO_CLEAN_AIR, 400.0);
-  ch4_ppm = calculatePPM(mq4Value, MQ4_RATIO_CLEAN_AIR, 1000.0);
-}
-
-// Function to calculate PPM values
-float calculatePPM(int sensorValue, float ratioCleanAir, float baselinePPM) {
-  float voltage = sensorValue * (5.0 / 1023.0);
-  float rs = ((5.0 * 10.0) / voltage) - 10.0; // Assuming 10K load resistor
-  return baselinePPM * pow(rs / ratioCleanAir, -1.2);
+  // Convert to PPM using sensor-specific calculations
+  co_ppm = calculateCOppm(mq7Value);
+  ch4_ppm = calculateCH4ppm(mq4Value);
+  air_quality_ppm = calculateAirQualityppm(mq135Value);
+  
+  // Apply reasonable limits to prevent extreme values
+  co_ppm = constrain(co_ppm, 0.1, 1000.0);
+  ch4_ppm = constrain(ch4_ppm, 500.0, 10000.0);
+  air_quality_ppm = constrain(air_quality_ppm, 400.0, 5000.0);
 }
 
 void updateDisplay() {
@@ -148,7 +183,7 @@ void sendDataToPC() {
   Serial.print(air_quality_ppm, 1);
   
   // Include estimation for PM2.5 and PM10 based on MQ135 readings if possible
-  // These are rough estimations and should be replaced with actual PM sensor data
+  // These are very rough estimations and should be replaced with actual PM sensor data
   float estimated_pm25 = air_quality_ppm * 0.3;  // Very rough estimate
   float estimated_pm10 = air_quality_ppm * 0.5;  // Very rough estimate
   

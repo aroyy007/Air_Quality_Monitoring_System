@@ -247,9 +247,9 @@ const Index = () => {
                             {/* <SensorCard title="NO₂" value={data.no2} unit="µg/m³" icon={Biohazard} glowColor={sensorStatuses.no2?.color || "green"} description={sensorStatuses.no2?.message} />
                             <SensorCard title="NH₃" value={data.nh3} unit="µg/m³" icon={Atom} glowColor={sensorStatuses.nh3?.color || "green"} description={sensorStatuses.nh3?.message} /> */}
                         </div>
-                        <AQIPredictionChart />
+                        {/* <AQIPredictionChart /> */}
                         <AlertSubscription />
-                        <AQIChart />
+                        {/* <AQIChart /> */}
                     </>
                 )}
             </main>

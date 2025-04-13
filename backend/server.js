@@ -11,6 +11,8 @@ import { SerialPort } from "serialport";
 import { ReadlineParser } from "@serialport/parser-readline";
 import SensorData from "./models/SensorData.js";
 import { checkAndSendAlerts } from "./controllers/emailController.js";
+import axios from "axios";
+
 
 dotenv.config();
 
@@ -40,7 +42,7 @@ let arduinoPortInstance = null;
 
         // Make sure no other program is using COM3 before trying to open it
         const ports = await SerialPort.list();
-        console.log("Available ports:", ports);
+        // console.log("Available ports:", ports);
 
         // Create the SerialPort instance
         arduinoPortInstance = new SerialPort({
@@ -64,10 +66,10 @@ let arduinoPortInstance = null;
             // Set up parser and data handling once connected
             const parser = arduinoPortInstance.pipe(new ReadlineParser({ delimiter: "\r\n" }));
 
-            // Arduino data handling section from server.js
+            // In server.js, inside the parser.on("data") handler
             parser.on("data", async (rawData) => {
                 try {
-                    // Trim any whitespace and validate JSON format
+                    // Your existing code to parse Arduino data
                     const trimmedData = rawData.trim();
                     if (!trimmedData || trimmedData === "") {
                         console.log("Empty data received from Arduino, skipping");
@@ -82,31 +84,88 @@ let arduinoPortInstance = null;
                         throw new Error("Invalid data format from Arduino");
                     }
 
-                    // Create new sensor data entry with proper type conversion
-                    // Create new sensor data entry with proper type conversion
-                    const newEntry = new SensorData({
-                        // Arduino sensor values
-                        co: parseFloat(sensorData.co) || 0,
-                        methane: parseFloat(sensorData.methane) || 0,      // Change from sensorData.ch4
-                        airQuality: parseFloat(sensorData.airQuality) || 0, // Change from sensorData.air_quality
+                    // Fetch current weather/air quality data from OpenWeatherMap
+                    const apiKey = process.env.OPENWEATHERMAP_API_KEY;
+                    if (apiKey) {
+                        try {
+                            const [airPollution, weather] = await Promise.all([
+                                axios.get(`https://api.openweathermap.org/data/2.5/air_pollution?lat=22.3569&lon=91.7832&appid=${apiKey}`),
+                                axios.get(`https://api.openweathermap.org/data/2.5/weather?q=${process.env.CITY_NAME || "Chittagong,BD"}&appid=${apiKey}&units=metric`),
+                            ]);
 
-                        // If Arduino calculates AQI, use it; otherwise it will be calculated
-                        aqi: parseFloat(sensorData.aqi) || 0,
+                            // Extract API pollution data
+                            const components = airPollution.data.list[0].components;
 
-                        // Other fields remain the same
-                        temperature: parseFloat(sensorData.temperature) || 0,
-                        humidity: parseFloat(sensorData.humidity) || 0,
-                        pm25: parseFloat(sensorData.pm25) || 0,
-                        pm10: parseFloat(sensorData.pm10) || 0,
-                        o3: parseFloat(sensorData.o3) || 0,
-                        so2: parseFloat(sensorData.so2) || 0,
-                        no2: parseFloat(sensorData.no2) || 0,
-                        nh3: parseFloat(sensorData.nh3) || 0,
-                    });
+                            // Create new sensor data entry with both Arduino and API data
+                            const newEntry = new SensorData({
+                                // Arduino sensor values
+                                co: parseFloat(sensorData.co) || 0,
+                                methane: parseFloat(sensorData.methane) || 0,
+                                airQuality: parseFloat(sensorData.airQuality) || 0,
 
-                    await newEntry.save();
-                    console.log("Saved Arduino data to DB:", newEntry);
-                    checkAndSendAlerts();
+                                // Weather API values
+                                temperature: weather.data.main.temp || 0,
+                                humidity: weather.data.main.humidity || 0,
+
+                                // Air pollution API values
+                                pm25: components.pm2_5 || 0,
+                                pm10: components.pm10 || 0,
+                                o3: components.o3 || 0,
+                                so2: components.so2 || 0,
+                                no2: components.no2 || 0,
+                                nh3: components.nh3 || 0,
+
+                                // Calculate AQI here if needed or use the API's AQI
+                                aqi: airPollution.data.list[0].main.aqi || 0,
+                            });
+
+                            await newEntry.save();
+                            console.log("Saved combined Arduino + API data to DB:", newEntry);
+                            checkAndSendAlerts();
+                        } catch (apiError) {
+                            console.error("Failed to fetch API data:", apiError.message);
+
+                            // Fall back to saving only Arduino data
+                            const newEntry = new SensorData({
+                                co: parseFloat(sensorData.co) || 0,
+                                methane: parseFloat(sensorData.methane) || 0,
+                                airQuality: parseFloat(sensorData.airQuality) || 0,
+                                aqi: 0, // Calculate if possible
+                                temperature: 0,
+                                humidity: 0,
+                                pm25: 0,
+                                pm10: 0,
+                                o3: 0,
+                                so2: 0,
+                                no2: 0,
+                                nh3: 0,
+                            });
+
+                            await newEntry.save();
+                            console.log("Saved Arduino-only data to DB (API fetch failed):", newEntry);
+                            checkAndSendAlerts();
+                        }
+                    } else {
+                        // No API key available, save only Arduino data
+                        const newEntry = new SensorData({
+                            co: parseFloat(sensorData.co) || 0,
+                            methane: parseFloat(sensorData.methane) || 0,
+                            airQuality: parseFloat(sensorData.airQuality) || 0,
+                            aqi: 0, // Calculate if possible
+                            temperature: 0,
+                            humidity: 0,
+                            pm25: 0,
+                            pm10: 0,
+                            o3: 0,
+                            so2: 0,
+                            no2: 0,
+                            nh3: 0,
+                        });
+
+                        await newEntry.save();
+                        console.log("Saved Arduino-only data to DB (no API key):", newEntry);
+                        checkAndSendAlerts();
+                    }
                 } catch (error) {
                     console.error("Arduino Parse/Save Error:", error.message, "Raw data:", rawData);
                 }
@@ -131,16 +190,30 @@ let arduinoPortInstance = null;
     }
 })();
 
-// Set up alert check interval
-setInterval(async () => {
-    console.log("Running alert check...");
+// Set up alert check interval (every 15 minutes)
+const ALERT_CHECK_INTERVAL = 2 * 60 * 1000; // 2 minutes in milliseconds
+console.log(`Setting up alert check interval: ${ALERT_CHECK_INTERVAL / 60000} minutes`);
+
+const alertCheckInterval = setInterval(async () => {
+    console.log("Running scheduled alert check...");
     try {
         const count = await checkAndSendAlerts();
-        console.log(`Sent ${count || 0} notifications`);
+        console.log(`Alert check complete: Sent ${count || 0} notifications`);
     } catch (error) {
         console.error("Alert Check Error:", error);
     }
-}, 15 * 60 * 1000);
+}, ALERT_CHECK_INTERVAL);
+
+// Run an initial check when the server starts
+(async () => {
+    try {
+        console.log("Running initial alert check...");
+        const count = await checkAndSendAlerts();
+        console.log(`Initial alert check complete: Sent ${count || 0} notifications`);
+    } catch (error) {
+        console.error("Initial Alert Check Error:", error);
+    }
+})();
 
 const PORT = process.env.PORT || 5001; // Change to 5001 or any other available port
 app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));

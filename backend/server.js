@@ -12,7 +12,7 @@ import { ReadlineParser } from "@serialport/parser-readline";
 import SensorData from "./models/SensorData.js";
 import { checkAndSendAlerts } from "./controllers/emailController.js";
 import axios from "axios";
-
+import { calculateAQI } from "./utils/aqiCalculator.js";
 
 dotenv.config();
 
@@ -116,7 +116,19 @@ let arduinoPortInstance = null;
                                 nh3: components.nh3 || 0,
 
                                 // Calculate AQI here if needed or use the API's AQI
-                                aqi: airPollution.data.list[0].main.aqi || 0,
+                                // aqi: airPollution.data.list[0].main.aqi || 0,
+
+                                // Calculate AQI based on the components
+                                aqi: calculateAQI({
+                                    pm25: components.pm2_5,
+                                    pm10: components.pm10,
+                                    o3: components.o3,
+                                    co: components.co / 1000,  // Convert from μg/m³ to ppm (approximate conversion)
+                                    so2: components.so2,
+                                    no2: components.no2,
+                                    nh3: components.nh3,
+                                }),
+
                             });
 
                             await newEntry.save();

@@ -47,6 +47,7 @@ graph TD
 - **MQ-135** – General air quality sensor
 - USB cable, breadboard, resistors  
 > **Note:** OLED display was planned but not used in the final version.
+![image](https://github.com/user-attachments/assets/6e24ecd2-ed32-43f9-96f3-da679c948568)
 
 ---
 

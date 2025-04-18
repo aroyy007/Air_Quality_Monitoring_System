@@ -6,7 +6,7 @@
 
 A full-stack IoT-based Air Quality Monitoring System using **Arduino**, **Node.js/Express**, **MongoDB**, and a **React** frontend. It integrates local gas sensors and external weather APIs to calculate real-time AQI, issue health alerts, and visualize environmental conditions. Future-ready with predictive analytics using transformer models.
 
-![image](https://github.com/user-attachments/assets/1a00ca6a-1d35-4120-aa06-eb7c39fc1f35)
+![image](https://github.com/user-attachments/assets/92a8d6a7-d115-4695-8001-7198ca011441)
 
 ---
 
